@@ -6,3 +6,4 @@ data/aerialseq.npy
 data/antseq.npy
 data/carseq.npy
 data/girlseq.npy
+code/.vscode/launch.json
