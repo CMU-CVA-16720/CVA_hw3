@@ -1,0 +1,8 @@
+.DS_Store
+hw3.pdf
+code/.DS_Store
+data/.DS_Store
+data/aerialseq.npy
+data/antseq.npy
+data/carseq.npy
+data/girlseq.npy
