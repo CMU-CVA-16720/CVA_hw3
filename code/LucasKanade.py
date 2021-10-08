@@ -16,3 +16,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     p = p0
     
     return p
+
+
+
+if __name__ == "__main__":
+    print('Hello world!')
