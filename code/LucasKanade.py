@@ -29,7 +29,7 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # T(x) - I(W(x;p))
         error = It - I_warp
         # print('Error ({}): {}'.format(i,np.sum(np.square(error))))
-        print('Error: {}'.format(np.sum(np.square(error))))
+#        print('Error: {}'.format(np.sum(np.square(error))))
         # gradient(I(W(x;p)))
         delIx = cv2.Sobel(I_warp,cv2.CV_64F,1,0,ksize=5)
         delIy = cv2.Sobel(I_warp,cv2.CV_64F,0,1,ksize=5)
@@ -50,23 +50,47 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # Update p
         p += np.squeeze(delta_p)
         # See if can exit
-        print('  p = {}'.format(np.squeeze(p)))
+#        print('  p = {}'.format(np.squeeze(p)))
         if(np.sum(np.square(delta_p)) < threshold):
-            print('  deltaP squared sum = {}'.format(np.sum(np.square(delta_p))))
+#            print('  deltaP squared sum = {}'.format(np.sum(np.square(delta_p))))
             run = False
     
     return p
 
 
+def highlight(img, rectangle):
+    # Takes in image and rectangle; highlights rectangle
+    img[rectangle[1],rectangle[0]:(rectangle[2]+1)] = 1.
+    img[rectangle[3],rectangle[0]:(rectangle[2]+1)] = 1.
+    img[rectangle[1]:(rectangle[3]+1),rectangle[0]] = 1.
+    img[rectangle[1]:(rectangle[3]+1),rectangle[2]] = 1.
+    return img
 
 if __name__ == "__main__":
     video = np.load('../data/carseq.npy') # row, col, frame
+    print(np.max(video[:,:,0]))
     print('Video shape: {}'.format(video.shape))
-    plt.imshow(video[:,:,0])
+    # Frame  0 -> 12, (137.5,125.1) -> (137.1,135.6); p ~ (0,10)
+    # Frame 12 -> 24, (137.1,135.6) -> (142.2,147.5); p ~ (5,12)
+    rectangle = np.array([59,116,145,151])
+    p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(rectangle), 1e-5, None, np.zeros(2))
+    print('p (0  -> 12) = {}'.format(np.squeeze(p)))
+    plt.imshow(highlight(video[:,:,0],rectangle))
     plt.show()
-    plt.imshow(video[:,:,12])
+    rectangle2 = rectangle
+    rectangle2[[0,2]] = rectangle2[[0,2]] + p[0]
+    rectangle2[[1,3]] = rectangle2[[1,3]] + p[1]
+    plt.imshow(highlight(video[:,:,12],rectangle2))
     plt.show()
-    # Frame 0 -> 12, (137.5,125.1) -> (137.1,135.6)
-    p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(np.array([59,116,145,151])), 1e-5, None)
+    # 12 -> 24
+    p = LucasKanade(video[:,:,12], video[:,:,24], np.transpose(rectangle), 1e-5, None, np.squeeze(p))
+    print('p (12 -> 24) = {}'.format(np.squeeze(p)))
+    plt.imshow(highlight(video[:,:,12],rectangle2))
+    plt.show()
+    rectangle3 = rectangle2
+    rectangle3[[0,2]] = rectangle3[[0,2]] + p[0]
+    rectangle3[[1,3]] = rectangle3[[1,3]] + p[1]
+    plt.imshow(highlight(video[:,:,24],rectangle3))
+    plt.show()
     print('p = {}'.format(p))
 
