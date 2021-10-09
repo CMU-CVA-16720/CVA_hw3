@@ -23,6 +23,7 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     # Gradient descent
     p = p0
     run = True
+    count = 0
     while(run):
         # Get I(W(x;p))
         I_warp = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
@@ -48,7 +49,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # Update p
         p += np.squeeze(delta_p)
         # See if can exit
-        if(np.sum(np.square(delta_p)) < threshold):
+        count += 1
+        if((np.sum(np.square(delta_p)) < threshold) or (count > num_iters)):
             run = False
     
     return p
@@ -71,7 +73,7 @@ if __name__ == "__main__":
     # 0 -> 12
     rectangle = np.array([59,116,145,151])
     now = datetime.now()
-    p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(rectangle), 1e-5, None, np.zeros(2))
+    p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(rectangle), 1e-5, 10000, np.zeros(2))
     print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (0  -> 12) = {}'.format(np.squeeze(p)))
     plt.imshow(highlight(video[:,:,0],rectangle))
@@ -84,7 +86,7 @@ if __name__ == "__main__":
 
     # 12 -> 24
     now = datetime.now()
-    p = LucasKanade(video[:,:,12], video[:,:,24], np.transpose(rectangle), 1e-5, None, np.squeeze(p))
+    p = LucasKanade(video[:,:,12], video[:,:,24], np.transpose(rectangle), 1e-5, 10000, np.squeeze(p))
     print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (12 -> 24) = {}'.format(np.squeeze(p)))
     plt.imshow(highlight(video[:,:,12],rectangle2))
