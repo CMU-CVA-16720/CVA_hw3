@@ -3,6 +3,7 @@ from scipy.interpolate import RectBivariateSpline
 
 import cv2
 from matplotlib import pyplot as plt
+from datetime import datetime
 
 def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     """
@@ -68,12 +69,15 @@ def highlight(img, rectangle):
 
 if __name__ == "__main__":
     video = np.load('../data/carseq.npy') # row, col, frame
-    print(np.max(video[:,:,0]))
     print('Video shape: {}'.format(video.shape))
     # Frame  0 -> 12, (137.5,125.1) -> (137.1,135.6); p ~ (0,10)
     # Frame 12 -> 24, (137.1,135.6) -> (142.2,147.5); p ~ (5,12)
+
+    # 0 -> 12
     rectangle = np.array([59,116,145,151])
+    now = datetime.now()
     p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(rectangle), 1e-5, None, np.zeros(2))
+    print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (0  -> 12) = {}'.format(np.squeeze(p)))
     plt.imshow(highlight(video[:,:,0],rectangle))
     plt.show()
@@ -82,8 +86,11 @@ if __name__ == "__main__":
     rectangle2[[1,3]] = rectangle2[[1,3]] + p[1]
     plt.imshow(highlight(video[:,:,12],rectangle2))
     plt.show()
+
     # 12 -> 24
+    now = datetime.now()
     p = LucasKanade(video[:,:,12], video[:,:,24], np.transpose(rectangle), 1e-5, None, np.squeeze(p))
+    print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (12 -> 24) = {}'.format(np.squeeze(p)))
     plt.imshow(highlight(video[:,:,12],rectangle2))
     plt.show()
