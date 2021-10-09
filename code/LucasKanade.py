@@ -24,13 +24,10 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     p = p0
     run = True
     while(run):
-    # for i in range(0,1000):
         # Get I(W(x;p))
         I_warp = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
         # T(x) - I(W(x;p))
         error = It - I_warp
-        # print('Error ({}): {}'.format(i,np.sum(np.square(error))))
-#        print('Error: {}'.format(np.sum(np.square(error))))
         # gradient(I(W(x;p)))
         delIx = cv2.Sobel(I_warp,cv2.CV_64F,1,0,ksize=5)
         delIy = cv2.Sobel(I_warp,cv2.CV_64F,0,1,ksize=5)
@@ -51,9 +48,7 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # Update p
         p += np.squeeze(delta_p)
         # See if can exit
-#        print('  p = {}'.format(np.squeeze(p)))
         if(np.sum(np.square(delta_p)) < threshold):
-#            print('  deltaP squared sum = {}'.format(np.sum(np.square(delta_p))))
             run = False
     
     return p
