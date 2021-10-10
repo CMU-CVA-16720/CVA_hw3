@@ -28,39 +28,25 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # Get I(W(x;p))
         I_warp = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
         # T(x) - I(W(x;p))
-        error = It - I_warp
+        error = (It - I_warp)[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
         # gradient(I(W(x;p)))
         delIx = cv2.Sobel(I_warp,cv2.CV_64F,1,0,ksize=5)
         delIy = cv2.Sobel(I_warp,cv2.CV_64F,0,1,ksize=5)
         delI = np.stack((delIx, delIy), axis=2)
         # Hessian
-        H = 0
-        reshp = np.reshape(delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1],(-1,1,2))
-        prod = reshp @ dwdp
-        tp = np.transpose(prod,(0,2,1))
-        prod2 = tp @ prod
-        sumed = np.sum(prod2,axis=0)
-        for row in range(rect[1],rect[3]+1): # y1 ~ y2
-            for col in range(rect[0],rect[2]+1): # x1 ~ x2
-                delI_dwdp = np.expand_dims(delI[row,col,:],axis=0) @ dwdp # (1x2)(2x2) = (1x2)
-                H += np.transpose(delI_dwdp) @ delI_dwdp #(2x1)(1x2) = (2x2)
+        delI_array = np.reshape(delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1],(-1,1,2))
+        delI_dwdp_array = delI_array @ dwdp
+        delI_dwdp_T_array = np.transpose(delI_dwdp_array,(0,2,1))
+        ATA_arary = delI_dwdp_T_array @ delI_dwdp_array
+        H = np.sum(ATA_arary,axis=0)
         Hinv = np.linalg.inv(H)
         # Delta P
-        reshp = np.reshape(delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1],(-1,1,2))
-        prod = reshp @ dwdp
-        tp = np.transpose(prod,(0,2,1))
-        prod2 = Hinv @ tp
-        error_crop = error[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
-        rshp = np.reshape(error_crop,(-1,1))
-        error_crop2 = np.zeros((3132,2,1))
-        error_crop2[:,0,:] = rshp
-        error_crop2[:,1,:] = rshp
-        sumed = np.sum(prod2 * error_crop2, axis=0)
-        delta_p = np.zeros((2,1))
-        for row in range(rect[1],rect[3]+1): # y1 ~ y2
-            for col in range(rect[0],rect[2]+1): # x1 ~ x2
-                delI_dwdp = np.expand_dims(delI[row,col,:],axis=0) @ dwdp
-                delta_p += (Hinv @ np.transpose(delI_dwdp))*error[row,col]
+        Hinv_delI_dwdp_array = Hinv @ delI_dwdp_T_array
+        error_vector = np.reshape(error,(-1,1))
+        error_array = np.zeros((error_vector.shape[0],2,1))
+        error_array[:,0,:] = error_vector
+        error_array[:,1,:] = error_vector
+        delta_p = np.sum(Hinv_delI_dwdp_array * error_array, axis=0)
         # Update p
         p += np.squeeze(delta_p)
         # See if can exit
