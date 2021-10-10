@@ -57,12 +57,12 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     return p
 
 
-def highlight(img, rectangle):
+def highlight(img, rectangle, val=1.):
     # Takes in image and rectangle; highlights rectangle
-    img[rectangle[1],rectangle[0]:(rectangle[2]+1)] = 1.
-    img[rectangle[3],rectangle[0]:(rectangle[2]+1)] = 1.
-    img[rectangle[1]:(rectangle[3]+1),rectangle[0]] = 1.
-    img[rectangle[1]:(rectangle[3]+1),rectangle[2]] = 1.
+    img[rectangle[1],rectangle[0]:(rectangle[2]+1)] = val
+    img[rectangle[3],rectangle[0]:(rectangle[2]+1)] = val
+    img[rectangle[1]:(rectangle[3]+1),rectangle[0]] = val
+    img[rectangle[1]:(rectangle[3]+1),rectangle[2]] = val
     return img
 
 if __name__ == "__main__":
