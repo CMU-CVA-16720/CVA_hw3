@@ -3,9 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from LucasKanade import LucasKanade, highlight
-
-# write your script here, we recommend the above libraries for making your animation
+from LucasKanade import LucasKanade
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_iters', type=int, default=1e4, help='number of iterations of Lucas-Kanade')
@@ -36,6 +34,11 @@ np.save('carseqrects.npy',rect_array)
 rect_array = np.load('carseqrects.npy')
 frames_of_interest = [1, 100, 200, 300, 400]
 for i in frames_of_interest:
-    img = highlight(seq[:,:,i], rect_array[i,:].astype('int'))
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    coord = rect_array[i,:]
+    box=patches.Rectangle((coord[0],coord[1]),coord[2]-coord[0],coord[3]-coord[1],ec='red',fc='None')
+    img = seq[:,:,i]
     plt.imshow(img)
+    ax.add_patch(box)
     plt.show()
