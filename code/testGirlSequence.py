@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-from LucasKanade import LucasKanade, highlight
+from LucasKanade import LucasKanade
 
 # write your script here, we recommend the above libraries for making your animation
 
@@ -36,6 +36,12 @@ np.save('girlseqrects.npy',rect_array)
 rect_array = np.load('girlseqrects.npy')
 frames_of_interest = [1, 20, 40, 60, 80]
 for i in frames_of_interest:
-    img = highlight(seq[:,:,i], rect_array[i,:].astype('int'),255)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    coord = rect_array[i,:]
+    box=patches.Rectangle((coord[0],coord[1]),coord[2]-coord[0],coord[3]-coord[1],ec='red',fc='None')
+    img = seq[:,:,i]
     plt.imshow(img)
+    ax.add_patch(box)
     plt.show()
+    
