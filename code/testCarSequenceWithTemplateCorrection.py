@@ -49,15 +49,19 @@ np.save('carseqrects-wcrt.npy',rect_array)
 
 # Display rectangles
 rect_array = np.load('carseqrects-wcrt.npy')
+rect_array_old = np.load('carseqrects.npy')
 frames_of_interest = [1, 100, 200, 300, 400]
 for i in frames_of_interest:
     fig = plt.figure()
     ax = fig.add_subplot(111)
     coord = rect_array[i,:]
     box=patches.Rectangle((coord[0],coord[1]),coord[2]-coord[0],coord[3]-coord[1],ec='red',fc='None')
+    coord2 = rect_array_old[i,:]
+    box2=patches.Rectangle((coord2[0],coord2[1]),coord2[2]-coord2[0],coord2[3]-coord2[1],ec='blue',fc='None')
     img = seq[:,:,i]
     plt.imshow(img)
     ax.add_patch(box)
+    ax.add_patch(box2)
     plt.show()
 
 
