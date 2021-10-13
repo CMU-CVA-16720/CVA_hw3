@@ -17,9 +17,12 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     """
     # Jacobian is constant
     dwdp = np.array([[1, 0],[0, 1]])
-    # Get spline
+    # Get spline for image
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
-
+    # Get splines for gradient of image
+    It1_gradient = np.gradient(It1)
+    It1_dx_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1_gradient[1])
+    It1_dy_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1_gradient[0])
     # Gradient descent
     p = p0
     run = True
@@ -30,8 +33,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # T(x) - I(W(x;p))
         error = (It - I_warp)[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
         # gradient(I(W(x;p)))
-        delIx = cv2.Sobel(I_warp,cv2.CV_64F,1,0,ksize=5)
-        delIy = cv2.Sobel(I_warp,cv2.CV_64F,0,1,ksize=5)
+        delIx = It1_dx_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
+        delIy = It1_dy_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
         delI = np.stack((delIx, delIy), axis=2)
         # Hessian
         delI_array = np.reshape(delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1],(-1,1,2))
