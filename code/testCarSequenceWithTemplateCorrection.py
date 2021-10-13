@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# write your script here, we recommend the above libraries for making your animation
+from LucasKanade import LucasKanade
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_iters', type=int, default=1e4, help='number of iterations of Lucas-Kanade')
@@ -16,3 +16,53 @@ template_threshold = args.template_threshold
 
 seq = np.load("../data/carseq.npy")
 rect = [59, 116, 145, 151]
+print('Number of frames: {}'.format(seq.shape[2]))
+rect_array = np.zeros((seq.shape[2],4))
+rect_array[0,:] = rect[:]
+
+# Setup for template drift correction
+template_org = seq[:,:,0]   # T1
+template_org_rect = [59, 116, 145, 151]
+template_cur = seq[:,:,0]   # Tn
+template_cur_rect = list(rect)
+pn = np.zeros(2)
+pn_str = np.zeros(2)
+
+# Compute rect_array
+for i in range(1, seq.shape[2]):
+    pn     = LucasKanade(template_cur, seq[:,:,i], np.array(template_cur_rect).astype('int'), threshold, num_iters, pn)     # pn
+    pn_str = LucasKanade(template_org, seq[:,:,i], np.array(template_org_rect).astype('int'), threshold, num_iters, np.copy(pn))     # pn*
+    rect_array[i,0] = (template_cur_rect[0] + pn[0])
+    rect_array[i,2] = (template_cur_rect[2] + pn[0])
+    rect_array[i,1] = (template_cur_rect[1] + pn[1])
+    rect_array[i,3] = (template_cur_rect[3] + pn[1])
+    print('Frame {}/{}; rect delta = {}'.format(i,seq.shape[2], rect_array[i,:]-rect_array[0,:]))
+    # Conditionally update template
+    drift = np.linalg.norm(pn_str - pn)
+    if(drift <= template_threshold):
+        template_cur = seq[:,:,i]
+        template_cur_rect[0] = (rect[0] + pn_str[0])
+        template_cur_rect[2] = (rect[2] + pn_str[0])
+        template_cur_rect[1] = (rect[1] + pn_str[1])
+        template_cur_rect[3] = (rect[3] + pn_str[1])
+np.save('carseqrects-wcrt.npy',rect_array)
+
+# Display rectangles
+rect_array = np.load('carseqrects-wcrt.npy')
+frames_of_interest = [1, 100, 200, 300, 400]
+for i in frames_of_interest:
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    coord = rect_array[i,:]
+    box=patches.Rectangle((coord[0],coord[1]),coord[2]-coord[0],coord[3]-coord[1],ec='red',fc='None')
+    img = seq[:,:,i]
+    plt.imshow(img)
+    ax.add_patch(box)
+    plt.show()
+
+
+
+
+
+
+
