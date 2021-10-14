@@ -34,11 +34,9 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         error = It-I_warp
         error[mask_warp] = 0
         # gradient(I(W(x;p)))
-        I_warp_gradient = np.gradient(I_warp)
-        I_warp_dx_spline = RectBivariateSpline(np.arange(0,I_warp.shape[0]),np.arange(0,I_warp.shape[1]),I_warp_gradient[1])
-        I_warp_dy_spline = RectBivariateSpline(np.arange(0,I_warp.shape[0]),np.arange(0,I_warp.shape[1]),I_warp_gradient[0])
-        delIx = I_warp_dx_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]))
-        delIy = I_warp_dy_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]))
+        I_warp_spline = RectBivariateSpline(np.arange(0,I_warp.shape[0]),np.arange(0,I_warp.shape[1]),I_warp)
+        delIx = I_warp_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]),dy=1)
+        delIy = I_warp_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]),dx=1)
         delI = np.stack((delIx, delIy), axis=2)
         # Hessian
         H = np.zeros((6,6))
@@ -103,10 +101,10 @@ if __name__ == "__main__":
 
     # Test case - Translation
     frame = video[:,:,0]
-    transf_mat = np.array([[1,0,10],[0,1,10],[0,0,1]]) # row, col, 1
+    transf_mat = np.array([[1,0,1],[0,1,1],[0,0,1]]) # row, col, 1
     warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:250,50:250]
-    warped_img = warped_img[50:250,50:250]
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
     plt.imshow(frame)
     plt.show()
     plt.imshow(warped_img)
