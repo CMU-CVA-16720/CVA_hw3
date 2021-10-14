@@ -7,3 +7,10 @@ data/antseq.npy
 data/carseq.npy
 data/girlseq.npy
 code/.vscode/launch.json
+carframe100.png
+carframe200.png
+carframe300.png
+carframe400.png
+carframe001.png
+code/carseqrects.npy
+.gitignore
