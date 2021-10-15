@@ -26,7 +26,7 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     y_vect = np.arange(0,It1.shape[0])
     # Gradient descent
     p = np.copy(p0)
-    for i in range(0,num_iters):
+    for i in range(0,int(num_iters)):
         # W(x;p)
         X_vect = x_vect+p[0]
         Y_vect = y_vect+p[1]
@@ -41,21 +41,21 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         delI = np.stack((delIx, delIy), axis=2)
         delI = delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
         # Hessian
-        delI_array = np.reshape(delI,(-1,1,2))
-        delI_dwdp_array = delI_array @ dwdp
-        delI_dwdp_T_array = np.transpose(delI_dwdp_array,(0,2,1))
-        ATA_arary = delI_dwdp_T_array @ delI_dwdp_array
-        H = np.sum(ATA_arary,axis=0)
+        delI_array = np.reshape(delI,(-1,1,2))                      # N x 1 x 2, N = # of pixels in rect
+        delI_dwdp_array = delI_array @ dwdp                         # N x 1 x 2
+        delI_dwdp_T_array = np.transpose(delI_dwdp_array,(0,2,1))   # N x 2 x 1
+        ATA_arary = delI_dwdp_T_array @ delI_dwdp_array             # N x 2 x 2
+        H = np.sum(ATA_arary,axis=0)                                # 2 x 2
         Hinv = np.linalg.inv(H)
         # Delta P
-        Hinv_delI_dwdp_array = Hinv @ delI_dwdp_T_array
-        error_vector = np.reshape(error,(-1,1))
-        error_array = np.zeros((error_vector.shape[0],2,1))
+        Hinv_delI_dwdp_array = Hinv @ delI_dwdp_T_array             # N x 2 x 1
+        error_vector = np.reshape(error,(-1,1))                     # N x 1
+        error_array = np.zeros((error_vector.shape[0],2,1))         # N x 2 x 1
         error_array[:,0,:] = error_vector
         error_array[:,1,:] = error_vector
-        delta_p = np.sum(Hinv_delI_dwdp_array * error_array, axis=0)
+        delta_p = np.sum(Hinv_delI_dwdp_array * error_array, axis=0)# 2 x 1
         # Update p
-        p += np.squeeze(delta_p)
+        p += np.squeeze(delta_p)                                    # (2,)
         # See if can exit
         if(np.sum(np.square(delta_p)) < threshold):
             break
