@@ -20,6 +20,7 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
     dwdp_array[:,:,[0,1],[0,3]] = np.stack((xv,xv),axis=2)
     dwdp_array[:,:,[0,1],[1,4]] = np.stack((yv,yv),axis=2)
     dwdp_array[:,:,[0,1],[2,5]] = 1
+    dwdp_array = np.reshape(dwdp_array,(-1,2,6))
     # Get spline for image
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
     # x and y vectors
@@ -53,22 +54,23 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         delIy[mask] = 0
         delI = np.stack((delIx, delIy), axis=2)
         # Hessian
-        H = np.zeros((6,6))
-        for row in range(It1.shape[0]):
-            for col in range(It1.shape[1]):
-                # check if in area of interest
-                if(mask[row,col] == False):
-                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ dwdp_array[row,col]
-                    H += np.transpose(delI_dwdp) @ delI_dwdp
-        Hinv = np.linalg.inv(H)
+        delI_array = np.reshape(delI,(-1,1,2))                      # N x 1 x 2
+        delI_dwdp_array = delI_array @ dwdp_array                   # N x 1 x 6
+        delI_dwdp_T_array = np.transpose(delI_dwdp_array,(0,2,1))   # N x 6 x 1
+        ATA_arary = delI_dwdp_T_array @ delI_dwdp_array             # N x 6 x 6
+        H = np.sum(ATA_arary,axis=0)                                # 6 x 6
+        Hinv = np.linalg.inv(H)                                     # 6 x 6
         # Compute deltaP
-        delta_p = np.zeros((6,1))
-        for row in range(It1.shape[0]):
-            for col in range(It1.shape[1]):
-                # check if in area of interest
-                if(mask[row,col] == False):
-                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ dwdp_array[row,col]
-                    delta_p += (Hinv @ np.transpose(delI_dwdp)) * error[row,col]
+        Hinv_delI_dwdp_array = Hinv @ delI_dwdp_T_array             # N x 6 x 1
+        error_vector = np.reshape(error,(-1,1))                     # N x 1
+        error_array = np.zeros((error_vector.shape[0],6,1))         # N x 6 x 1
+        error_array[:,0,:] = error_vector
+        error_array[:,1,:] = error_vector
+        error_array[:,2,:] = error_vector
+        error_array[:,3,:] = error_vector
+        error_array[:,4,:] = error_vector
+        error_array[:,5,:] = error_vector
+        delta_p = np.sum(Hinv_delI_dwdp_array * error_array, axis=0)# 2 x 1
         # Update M
         # 1+p1  p2      p3
         # p4    1+p5    p6
@@ -79,7 +81,7 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         M[1,0] += delta_p[3]
         M[1,1] += delta_p[4]
         M[1,2] += delta_p[5]
-        print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
+        # print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
         # See if can exit
         if(np.linalg.norm(delta_p) < threshold):
             break
@@ -117,33 +119,33 @@ if __name__ == "__main__":
     plt.imshow(warped_img)
     plt.show()
     M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    print('Result: M = \n', M)
+    print('Result 1: M = \n', M)
 
     # Test case - Translation 2
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # plt.imshow(frame)
-    # plt.show()
-    # plt.imshow(warped_img)
-    # plt.show()
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result: M = \n', M)
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    plt.imshow(frame)
+    plt.show()
+    plt.imshow(warped_img)
+    plt.show()
+    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    print('Result 2: M = \n', M)
 
     # Test case - Skew
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # plt.imshow(frame)
-    # plt.show()
-    # plt.imshow(warped_img)
-    # plt.show()
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result: M = \n', M)
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    plt.imshow(frame)
+    plt.show()
+    plt.imshow(warped_img)
+    plt.show()
+    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    print('Result 3: M = \n', M)
     
 
 
