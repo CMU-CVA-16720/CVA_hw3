@@ -19,21 +19,29 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     dwdp = np.array([[1, 0],[0, 1]])
     # Get spline for image
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
+    # x and y vectors
+    x_vect = np.arange(0,It1.shape[1])
+    y_vect = np.arange(0,It1.shape[0])
     # Gradient descent
     p = p0
     run = True
     count = 0
     while(run):
-        # Get I(W(x;p))
-        I_warp = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0])
-        # T(x) - I(W(x;p))
-        error = (It - I_warp)[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
-        # gradient(I(W(x;p)))
-        delIx = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0],dy=1)
-        delIy = It1_spline(np.arange(0,It1.shape[0])+p[1], np.arange(0,It1.shape[1])+p[0],dx=1)
+        # W(x;p)
+        X_vect = x_vect+p[0]
+        Y_vect = y_vect+p[1]
+        # I(W(x;p))
+        I_warp = It1_spline(Y_vect, X_vect)
+        # T(x) - I(W(x;p)), crop
+        error = (It - I_warp)
+        error = error[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
+        # gradient(I(W(x;p))), crop
+        delIx = It1_spline(Y_vect, X_vect,dy=1)
+        delIy = It1_spline(Y_vect, X_vect,dx=1)
         delI = np.stack((delIx, delIy), axis=2)
+        delI = delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
         # Hessian
-        delI_array = np.reshape(delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1],(-1,1,2))
+        delI_array = np.reshape(delI,(-1,1,2))
         delI_dwdp_array = delI_array @ dwdp
         delI_dwdp_T_array = np.transpose(delI_dwdp_array,(0,2,1))
         ATA_arary = delI_dwdp_T_array @ delI_dwdp_array
