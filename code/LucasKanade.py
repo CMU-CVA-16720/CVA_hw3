@@ -16,6 +16,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     :return: p: movement vector [dp_x, dp_y]
     """
     # Jacobian is constant
+    # W1 = x+p0 -> [[1 0]
+    # W2 = y+p1 ->  [0 1]]
     dwdp = np.array([[1, 0],[0, 1]])
     # Get spline for image
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
@@ -23,10 +25,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     x_vect = np.arange(0,It1.shape[1])
     y_vect = np.arange(0,It1.shape[0])
     # Gradient descent
-    p = p0
-    run = True
-    count = 0
-    while(run):
+    p = np.copy(p0)
+    for i in range(0,num_iters):
         # W(x;p)
         X_vect = x_vect+p[0]
         Y_vect = y_vect+p[1]
@@ -57,9 +57,8 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
         # Update p
         p += np.squeeze(delta_p)
         # See if can exit
-        count += 1
-        if((np.sum(np.square(delta_p)) < threshold) or (count > num_iters)):
-            run = False
+        if(np.sum(np.square(delta_p)) < threshold):
+            break
     
     return p
 
