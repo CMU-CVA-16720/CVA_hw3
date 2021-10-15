@@ -31,7 +31,7 @@ pn_str = np.zeros(2)
 # Compute rect_array
 for i in range(1, seq.shape[2]):
     pn     = LucasKanade(template_cur, seq[:,:,i], np.array(template_cur_rect).astype('int'), threshold, num_iters, pn)     # pn
-    pn_str = LucasKanade(template_org, seq[:,:,i], np.array(template_org_rect).astype('int'), threshold, num_iters, np.copy(pn))     # pn*
+    pn_str = LucasKanade(template_org, seq[:,:,i], np.array(template_org_rect).astype('int'), threshold, num_iters, pn)     # pn*
     rect_array[i,0] = (template_cur_rect[0] + pn[0])
     rect_array[i,2] = (template_cur_rect[2] + pn[0])
     rect_array[i,1] = (template_cur_rect[1] + pn[1])
