@@ -15,36 +15,50 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
     # Compute Jacobian
     # [x y 1 0 0 0]
     # [0 0 0 x y 1]
-    jacobian_array = np.zeros((It1.shape+(2,6)))
+    dwdp_array = np.zeros((It1.shape+(2,6))) # N x M x 2 x 6
     xv, yv = np.meshgrid(range(It1.shape[1]), range(It1.shape[0]))
-    jacobian_array[:,:,[0,1],[0,3]] = np.stack((xv,xv),axis=2)
-    jacobian_array[:,:,[0,1],[1,4]] = np.stack((yv,yv),axis=2)
-    jacobian_array[:,:,[0,1],[2,5]] = 1
+    dwdp_array[:,:,[0,1],[0,3]] = np.stack((xv,xv),axis=2)
+    dwdp_array[:,:,[0,1],[1,4]] = np.stack((yv,yv),axis=2)
+    dwdp_array[:,:,[0,1],[2,5]] = 1
+    # Get spline for image
+    It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
+    # x and y vectors
+    x_vect = np.arange(0,It1.shape[1])
+    y_vect = np.arange(0,It1.shape[0])
     # Initialize M as do-nothing
     # 1+p1  p2      p3
     # p4    1+p5    p6
     # 0     0       1
-    M = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    M = np.array([[1, 0.0, 0.0], [0.0, 1, 0.0], [0.0, 0.0, 1.0]])
     # Gradient descent
     for i in range(num_iters):
+        # Check where W(x;p) is legal
+        grid = np.meshgrid(range(It1.shape[1]), range(It1.shape[0]))
+        grid = np.stack((grid[0], grid[1]), axis=2)
+        grid_warp = np.zeros(grid.shape)
+        grid_warp[:,:,0] = grid[:,:,0]*M[0,0] + grid[:,:,1]*M[0,1] + M[0,2]
+        grid_warp[:,:,1] = grid[:,:,0]*M[1,0] + grid[:,:,1]*M[1,1] + M[1,2]
+        illegal_x = np.logical_or(grid_warp[:,:,0] < 0, grid_warp[:,:,0] >= It1.shape[1])
+        illegal_y = np.logical_or(grid_warp[:,:,1] < 0, grid_warp[:,:,1] >= It1.shape[0])
+        mask = np.logical_or(illegal_x,illegal_y)
         # I(W(x;p))
-        I_warp = affine_transform(It1,M)
+        I_warp = It1_spline.ev(grid_warp[:,:,1],grid_warp[:,:,0])
         # Error = T(x)-I(W), only at overlap
-        mask_warp = np.logical_not(affine_transform(np.ones(It1.shape),np.linalg.inv(M))) # pixels to ignore
         error = It-I_warp
-        error[mask_warp] = 0
+        error[mask] = 0
         # gradient(I(W(x;p)))
-        I_warp_spline = RectBivariateSpline(np.arange(0,I_warp.shape[0]),np.arange(0,I_warp.shape[1]),I_warp)
-        delIx = I_warp_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]),dy=1)
-        delIy = I_warp_spline(np.arange(0,I_warp.shape[0]), np.arange(0,I_warp.shape[1]),dx=1)
+        delIx = It1_spline.ev(grid_warp[:,:,1],grid_warp[:,:,0],dy=1)
+        delIy = It1_spline.ev(grid_warp[:,:,1],grid_warp[:,:,0],dx=1)
+        delIx[mask] = 0
+        delIy[mask] = 0
         delI = np.stack((delIx, delIy), axis=2)
         # Hessian
         H = np.zeros((6,6))
         for row in range(It1.shape[0]):
             for col in range(It1.shape[1]):
                 # check if in area of interest
-                if(mask_warp[row,col] == False):
-                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ jacobian_array[row,col]
+                if(mask[row,col] == False):
+                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ dwdp_array[row,col]
                     H += np.transpose(delI_dwdp) @ delI_dwdp
         Hinv = np.linalg.inv(H)
         # Compute deltaP
@@ -52,19 +66,19 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         for row in range(It1.shape[0]):
             for col in range(It1.shape[1]):
                 # check if in area of interest
-                if(mask_warp[row,col] == False):
-                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ jacobian_array[row,col]
+                if(mask[row,col] == False):
+                    delI_dwdp = np.expand_dims(delI[row,col],axis=0) @ dwdp_array[row,col]
                     delta_p += (Hinv @ np.transpose(delI_dwdp)) * error[row,col]
         # Update M
         # 1+p1  p2      p3
         # p4    1+p5    p6
         # 0     0       1
-        M[0,0] += delta_p[4]
-        M[0,1] += delta_p[3]
-        M[0,2] += delta_p[5]
-        M[1,0] += delta_p[1]
-        M[1,1] += delta_p[0]
-        M[1,2] += delta_p[2]
+        M[0,0] += delta_p[0]
+        M[0,1] += delta_p[1]
+        M[0,2] += delta_p[2]
+        M[1,0] += delta_p[3]
+        M[1,1] += delta_p[4]
+        M[1,2] += delta_p[5]
         print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
         # See if can exit
         if(np.linalg.norm(delta_p) < threshold):
@@ -80,13 +94,6 @@ if __name__ == "__main__":
     video = np.load('../data/antseq.npy') # row, col, frame
     np.set_printoptions(suppress=True)
     np.set_printoptions(precision=4)
-    
-    # Affine testing
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,10],[0,1,0],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # plt.imshow(warped_img)
-    # plt.show()
 
     # Test case - Identity
     # frame = video[:,:,0]
@@ -99,9 +106,9 @@ if __name__ == "__main__":
     # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
     # print('Result: M = \n', M)
 
-    # Test case - Translation
+    # Test case - Translation 1
     frame = video[:,:,0]
-    transf_mat = np.array([[1,0,1],[0,1,1],[0,0,1]]) # row, col, 1
+    transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
     warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
     frame = frame[50:200,50:200]
     warped_img = warped_img[50:200,50:200]
@@ -112,9 +119,22 @@ if __name__ == "__main__":
     M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
     print('Result: M = \n', M)
 
+    # Test case - Translation 2
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # plt.imshow(frame)
+    # plt.show()
+    # plt.imshow(warped_img)
+    # plt.show()
+    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    # print('Result: M = \n', M)
+
     # Test case - Skew
     # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0.05,-10],[0.025,1,-10],[0,0,1]]) # row, col, 1
+    # transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
     # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
     # frame = frame[50:200,50:200]
     # warped_img = warped_img[50:200,50:200]
