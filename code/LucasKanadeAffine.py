@@ -23,9 +23,6 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
     dwdp_array = np.reshape(dwdp_array,(-1,2,6))
     # Get spline for image
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
-    # x and y vectors
-    x_vect = np.arange(0,It1.shape[1])
-    y_vect = np.arange(0,It1.shape[0])
     # Initialize M as do-nothing
     # 1+p1  p2      p3
     # p4    1+p5    p6
@@ -91,36 +88,36 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
 
 if __name__ == "__main__":
     # Setup
-    threshold = 1e-14
-    num_iter = int(1e14)
+    threshold = 1e-2
+    num_iter = 1e3
     video = np.load('../data/antseq.npy') # row, col, frame
     np.set_printoptions(suppress=True)
     np.set_printoptions(precision=4)
 
-    # # Test case - Identity
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 0: M = \n', M)
+    # Test case - Identity
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    print('Result 0: M = \n', M)
 
-    # # Test case - Translation 1
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 1: M = \n', M)
+    # Test case - Translation 1
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    print('Result 1: M = \n', M)
 
-    # # Test case - Translation 2
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 2: M = \n', M)
+    # Test case - Translation 2
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    print('Result 2: M = \n', M)
 
     # Test case - Skew
     frame = video[:,:,0]
