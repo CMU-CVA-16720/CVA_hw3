@@ -55,7 +55,7 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
         # I(W(x;p))
         I_warp = It1_spline.ev(grid_warp[:,:,1],grid_warp[:,:,0])
         # Error = I(W)-T(x), only at overlap
-        error = It-I_warp
+        error = I_warp-It
         error[mask] = 0
         # Use mask to compute Hessian
         mask_array = mask.reshape((-1,1))
