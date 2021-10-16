@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# write your script here, we recommend the above libraries for making your animation
+from SubtractDominantMotion import SubtractDominantMotion
+import cv2
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_iters', type=int, default=1e3, help='number of iterations of Lucas-Kanade')
@@ -15,3 +16,13 @@ threshold = args.threshold
 tolerance = args.tolerance
 
 seq = np.load('../data/aerialseq.npy')
+
+frames_of_interest = [30, 60, 90, 120]
+for frame in frames_of_interest:
+    img1 = seq[:,:,frame-1]
+    img2 = seq[:,:,frame]
+    mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+    cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
+    cur_frame[mask] = [0,0,255]
+    plt.imshow(cur_frame)
+    plt.show()
