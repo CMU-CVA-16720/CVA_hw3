@@ -10,7 +10,7 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
     :param It1: Current image
     :param threshold: if the length of dp is smaller than the threshold, terminate the optimization
     :param num_iters: number of iterations of the optimization
-    :return: M: the Affine warp matrix [2x3 numpy array]
+    :return: M: the Affine warp matrix [3x3 numpy array]
     """
     # Compute Jacobian
     # [x y 1 0 0 0]
@@ -32,7 +32,7 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
     # 0     0       1
     M = np.array([[1, 0.0, 0.0], [0.0, 1, 0.0], [0.0, 0.0, 1.0]])
     # Gradient descent
-    for i in range(num_iters):
+    for i in range(int(num_iters)):
         # Check where W(x;p) is legal
         grid = np.meshgrid(range(It1.shape[1]), range(It1.shape[0]))
         grid = np.stack((grid[0], grid[1]), axis=2)
@@ -83,56 +83,44 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         M[1,2] += delta_p[5]
         # print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
         # See if can exit
-        if(np.linalg.norm(delta_p) < threshold):
+        if(np.sum(np.square(delta_p)) < threshold):
             break
     
-    return M[0:2,:]
+    return M
 
 
 if __name__ == "__main__":
     # Setup
-    threshold = 1e-2
-    num_iter = int(1e3)
+    threshold = 1e-14
+    num_iter = int(1e14)
     video = np.load('../data/antseq.npy') # row, col, frame
     np.set_printoptions(suppress=True)
     np.set_printoptions(precision=4)
 
-    # Test case - Identity
+    # # Test case - Identity
     # frame = video[:,:,0]
     # transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
     # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # plt.imshow(frame)
-    # plt.show()
-    # plt.imshow(warped_img)
-    # plt.show()
     # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # print('Result: M = \n', M)
+    # print('Result 0: M = \n', M)
 
-    # Test case - Translation 1
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    plt.imshow(frame)
-    plt.show()
-    plt.imshow(warped_img)
-    plt.show()
-    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    print('Result 1: M = \n', M)
+    # # Test case - Translation 1
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    # print('Result 1: M = \n', M)
 
-    # Test case - Translation 2
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    plt.imshow(frame)
-    plt.show()
-    plt.imshow(warped_img)
-    plt.show()
-    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    print('Result 2: M = \n', M)
+    # # Test case - Translation 2
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    # print('Result 2: M = \n', M)
 
     # Test case - Skew
     frame = video[:,:,0]
@@ -140,10 +128,6 @@ if __name__ == "__main__":
     warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
     frame = frame[50:200,50:200]
     warped_img = warped_img[50:200,50:200]
-    plt.imshow(frame)
-    plt.show()
-    plt.imshow(warped_img)
-    plt.show()
     M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
     print('Result 3: M = \n', M)
     
