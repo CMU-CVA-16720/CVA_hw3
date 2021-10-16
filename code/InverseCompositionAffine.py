@@ -142,6 +142,7 @@ if __name__ == "__main__":
     M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
     print('Result 3: M = \n', M)
 
+
     # # Test case - Comparing outputs
     # frame = video[:,:,0]
     # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
