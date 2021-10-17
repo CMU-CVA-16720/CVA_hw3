@@ -3,6 +3,9 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.ndimage import affine_transform
 
 from matplotlib import pyplot as plt
+from scipy.ndimage.morphology import binary_erosion, binary_dilation
+import cv2
+import time
 
 def InverseCompositionAffine(It, It1, threshold, num_iters):
     """
@@ -99,6 +102,27 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
     
     return M
 
+def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance):
+    """
+    :param image1: Images at time t
+    :param image2: Images at time t+1
+    :param threshold: used for LucasKanadeAffine
+    :param num_iters: used for LucasKanadeAffine
+    :param tolerance: binary threshold of intensity difference when computing the mask
+    :return: mask: [nxm]
+    """
+    
+    # Get Affine transform M
+    M = InverseCompositionAffine(image1, image2, threshold, num_iters)
+    # Compute error
+    warp_img1 = affine_transform(image1, np.linalg.inv(M))
+    error = np.abs(image2 - warp_img1)
+    mask = error>tolerance
+    mask = binary_erosion(mask, None, 1)
+    mask = binary_dilation(mask, None, 2)
+
+    return mask
+
 
 if __name__ == "__main__":
     # Setup
@@ -108,62 +132,72 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     np.set_printoptions(precision=4)
 
-    # Test case - Identity
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    print('Result 0: M = \n', M)
+    # # Test case - Identity
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    # print('Result 0: M = \n', M)
 
-    # Test case - Translation 1
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    print('Result 1: M = \n', M)
+    # # Test case - Translation 1
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    # print('Result 1: M = \n', M)
 
-    # Test case - Translation 2
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    print('Result 2: M = \n', M)
-
-    # Test case - Skew
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    print('Result 3: M = \n', M)
-
-
-    # # Test case - Comparing outputs
+    # # Test case - Translation 2
     # frame = video[:,:,0]
     # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
     # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
     # frame = frame[50:200,50:200]
     # warped_img = warped_img[50:200,50:200]
-    # plt.imshow(frame)
-    # plt.show()
-    # plt.imshow(warped_img)
-    # plt.show()
-    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    # new_img = affine_transform(video[:,:,0],np.linalg.inv(M))
-    # new_img = new_img[50:200,50:200]
-    # plt.imshow(warped_img)
-    # plt.show()
-    # plt.imshow(new_img)
-    # plt.show()
-    # plt.imshow(frame)
-    # plt.show()
+    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
     # print('Result 2: M = \n', M)
 
+    # # Test case - Skew
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    # print('Result 3: M = \n', M)
 
-
-
+    # Ant seq
+    threshold = 1e-2
+    num_iters = 1e3
+    tolerance = 0.2
+    frames_of_interest = [30, 60, 90, 120]
+    seq = np.load('../data/antseq.npy')
+    for frame in frames_of_interest:
+        img1 = seq[:,:,frame-1]
+        img2 = seq[:,:,frame]
+        ti = time.time()
+        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+        print('Elapsed time: ', time.time()-ti)
+        cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
+        cur_frame[mask] = [0,0,255]
+        plt.imshow(seq[:,:,frame]-seq[:,:,frame-1])
+        plt.show()
+        plt.imshow(cur_frame)
+        plt.show()
+    
+    # Car seq
+    threshold = 1e-2
+    num_iters = 1e3
+    tolerance = 0.2
+    frames_of_interest = [30, 60, 90, 120]
+    seq = np.load('../data/aerialseq.npy')
+    for frame in frames_of_interest:
+        img1 = seq[:,:,frame-1]
+        img2 = seq[:,:,frame]
+        ti = time.time()
+        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+        print('Elapsed time: ', time.time()-ti)
+        cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
+        cur_frame[mask] = [0,0,255]
+        plt.imshow(cur_frame)
+        plt.show()
