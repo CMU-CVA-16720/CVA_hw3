@@ -5,6 +5,7 @@ import matplotlib.patches as patches
 
 from SubtractDominantMotion import SubtractDominantMotion
 import cv2
+import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_iters', type=int, default=1e3, help='number of iterations of Lucas-Kanade')
@@ -21,7 +22,9 @@ frames_of_interest = [30, 60, 90, 120]
 for frame in frames_of_interest:
     img1 = seq[:,:,frame-1]
     img2 = seq[:,:,frame]
+    ti = time.time()
     mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+    print('Elapsed time: ', time.time()-ti)
     cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
     cur_frame[mask] = [0,0,255]
     plt.imshow(cur_frame)
