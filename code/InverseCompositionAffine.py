@@ -61,10 +61,10 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
         error = I_warp-It
         error[mask] = 0
         # Use mask to compute Hessian
-        mask_array = mask.reshape((-1,1))
+        mask_array = mask.reshape((-1,1)) # Turn mask to N x 6 x 6
         mask_array = np.stack((mask_array,mask_array,mask_array,mask_array,mask_array,mask_array),axis=1)
         mask_array = np.stack((mask_array,mask_array,mask_array,mask_array,mask_array,mask_array),axis=2)
-        mask_array = np.squeeze(mask_array)
+        mask_array = np.squeeze(mask_array)                         # N x 6 x 6
         cur_ATA_array = np.copy(ATA_array)
         cur_ATA_array[mask_array] = 0
         H = np.sum(cur_ATA_array,axis=0)                            # 6 x 6
@@ -73,7 +73,6 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
         mask_array = mask.reshape((-1,1))
         mask_array = np.stack((mask_array,mask_array,mask_array,mask_array,mask_array,mask_array),axis=1)
         Hinv_delT_dwdp_array = Hinv @ delT_dwdp_T_array             # N x 6 x 1
-        Hinv_delT_dwdp_array[mask_array] = 0
         error_vector = np.reshape(error,(-1,1))                     # N x 1
         error_array = np.zeros((error_vector.shape[0],6,1))         # N x 6 x 1
         error_array[:,0,:] = error_vector
@@ -132,39 +131,39 @@ if __name__ == "__main__":
     np.set_printoptions(suppress=True)
     np.set_printoptions(precision=4)
 
-    # # Test case - Identity
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 0: M = \n', M)
+    # Test case - Identity
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,0],[0,1,0],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    print('Result 0: M = \n', M)
 
-    # # Test case - Translation 1
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 1: M = \n', M)
+    # Test case - Translation 1
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,5],[0,1,5],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    print('Result 1: M = \n', M)
 
-    # # Test case - Translation 2
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 2: M = \n', M)
+    # Test case - Translation 2
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    print('Result 2: M = \n', M)
 
-    # # Test case - Skew
-    # frame = video[:,:,0]
-    # transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
-    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    # frame = frame[50:200,50:200]
-    # warped_img = warped_img[50:200,50:200]
-    # M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
-    # print('Result 3: M = \n', M)
+    # Test case - Skew
+    frame = video[:,:,0]
+    transf_mat = np.array([[1,0.25,0],[0,1,0],[0,0,1]]) # row, col, 1
+    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    frame = frame[50:200,50:200]
+    warped_img = warped_img[50:200,50:200]
+    M = InverseCompositionAffine(frame, warped_img, threshold, num_iter)
+    print('Result 3: M = \n', M)
 
     # Ant seq
     threshold = 1e-2
@@ -172,6 +171,7 @@ if __name__ == "__main__":
     tolerance = 0.2
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/antseq.npy')
+    print('Ant sequence: ')
     for frame in frames_of_interest:
         img1 = seq[:,:,frame-1]
         img2 = seq[:,:,frame]
@@ -191,6 +191,7 @@ if __name__ == "__main__":
     tolerance = 0.2
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/aerialseq.npy')
+    print('Car sequence: ')
     for frame in frames_of_interest:
         img1 = seq[:,:,frame-1]
         img2 = seq[:,:,frame]
