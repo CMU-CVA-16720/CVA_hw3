@@ -80,7 +80,7 @@ def LucasKanadeAffine(It, It1, threshold, num_iters):
         M[1,2] += delta_p[5]
         # print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
         # See if can exit
-        if(np.sum(np.square(delta_p)) < threshold):
+        if(np.linalg.norm(delta_p) < threshold):
             break
     
     return M
@@ -128,26 +128,26 @@ if __name__ == "__main__":
     M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
     print('Result 3: M = \n', M)
 
-    # Test case - Comparing outputs
-    frame = video[:,:,0]
-    transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
-    warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
-    frame = frame[50:200,50:200]
-    warped_img = warped_img[50:200,50:200]
-    plt.imshow(frame)
-    plt.show()
-    plt.imshow(warped_img)
-    plt.show()
-    M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
-    new_img = affine_transform(video[:,:,0],np.linalg.inv(M))
-    new_img = new_img[50:200,50:200]
-    plt.imshow(warped_img)
-    plt.show()
-    plt.imshow(new_img)
-    plt.show()
-    plt.imshow(frame)
-    plt.show()
-    print('Result 2: M = \n', M)
+    # # Test case - Comparing outputs
+    # frame = video[:,:,0]
+    # transf_mat = np.array([[1,0,-5],[0,1,-5],[0,0,1]]) # row, col, 1
+    # warped_img = affine_transform(frame,np.linalg.inv(transf_mat))
+    # frame = frame[50:200,50:200]
+    # warped_img = warped_img[50:200,50:200]
+    # plt.imshow(frame)
+    # plt.show()
+    # plt.imshow(warped_img)
+    # plt.show()
+    # M = LucasKanadeAffine(frame, warped_img, threshold, num_iter)
+    # new_img = affine_transform(video[:,:,0],np.linalg.inv(M))
+    # new_img = new_img[50:200,50:200]
+    # plt.imshow(warped_img)
+    # plt.show()
+    # plt.imshow(new_img)
+    # plt.show()
+    # plt.imshow(frame)
+    # plt.show()
+    # print('Result 4: M = \n', M)
 
 
 

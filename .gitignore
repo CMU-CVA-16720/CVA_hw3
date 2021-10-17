@@ -13,4 +13,7 @@ carframe300.png
 carframe400.png
 carframe001.png
 code/carseqrects.npy
+code/__pycache__/LucasKanade.cpython-38.pyc
+code/__pycache__/LucasKanadeAffine.cpython-38.pyc
+code/__pycache__/SubtractDominantMotion.cpython-38.pyc
 .gitignore

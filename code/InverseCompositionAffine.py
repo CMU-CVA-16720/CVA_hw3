@@ -94,7 +94,7 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
         M = np.copy(M @ np.linalg.inv(deltaM))
         # print('M ({:.2f}, {:.2f})= \n{}'.format(np.linalg.norm(error),np.linalg.norm(delta_p),M))
         # See if can exit
-        if(np.sum(np.square(delta_p)) < threshold):
+        if(np.linalg.norm(delta_p) < threshold):
             break
     
     return M
