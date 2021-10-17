@@ -18,11 +18,14 @@ tolerance = args.tolerance
 seq = np.load('../data/antseq.npy')
 
 frames_of_interest = [30, 60, 90, 120]
+
 for frame in frames_of_interest:
     img1 = seq[:,:,frame-1]
     img2 = seq[:,:,frame]
     mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
     cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
     cur_frame[mask] = [0,0,255]
+    plt.imshow(seq[:,:,frame]-seq[:,:,frame-1])
+    plt.show()
     plt.imshow(cur_frame)
     plt.show()
