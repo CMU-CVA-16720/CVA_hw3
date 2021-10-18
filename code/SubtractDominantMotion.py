@@ -7,7 +7,7 @@ from scipy.ndimage.morphology import binary_erosion, binary_dilation
 import cv2
 import sys
 
-def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance):
+def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance, erosion=1, dilation=1):
     """
     :param image1: Images at time t
     :param image2: Images at time t+1
@@ -23,8 +23,8 @@ def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance):
     warp_img1 = affine_transform(image1, np.linalg.inv(M))
     error = np.abs(image2 - warp_img1)
     mask = error>tolerance
-    mask = binary_erosion(mask, None, 1)
-    mask = binary_dilation(mask, None, 2)
+    mask = binary_erosion(mask, None, erosion)
+    mask = binary_dilation(mask, None, dilation)
 
     return mask
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     #     out.write(cur_frame)
     # out.release()
 
-    # # Make video of new (ant)
+    # Make video of new (ant)
     # out = cv2.VideoWriter('../vid/ant_msk.avi', cv2.VideoWriter_fourcc(*'mp4v'), 10, (video_ant.shape[1], video_ant.shape[0]))
     # for i in range(1,video_ant.shape[2]):
     #     img1 = video_ant[:,:,i-1]
