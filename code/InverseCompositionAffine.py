@@ -101,7 +101,7 @@ def InverseCompositionAffine(It, It1, threshold, num_iters):
     
     return M
 
-def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance):
+def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance, erosion=1, dilation=1):
     """
     :param image1: Images at time t
     :param image2: Images at time t+1
@@ -117,8 +117,8 @@ def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance):
     warp_img1 = affine_transform(image1, np.linalg.inv(M))
     error = np.abs(image2 - warp_img1)
     mask = error>tolerance
-    mask = binary_erosion(mask, None, 1)
-    mask = binary_dilation(mask, None, 2)
+    mask = binary_erosion(mask, None, erosion)
+    mask = binary_dilation(mask, None, dilation)
 
     return mask
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     # Ant seq
     threshold = 1e-2
     num_iters = 1e3
-    tolerance = 0.2
+    tolerance = 0.02
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/antseq.npy')
     print('Ant sequence: ')
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         img1 = seq[:,:,frame-1]
         img2 = seq[:,:,frame]
         ti = time.time()
-        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance,1,1)
         print('Elapsed time: ', time.time()-ti)
         cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
         cur_frame[mask] = [0,0,255]
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # Car seq
     threshold = 1e-2
     num_iters = 1e3
-    tolerance = 0.2
+    tolerance = 0.1
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/aerialseq.npy')
     print('Car sequence: ')
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         img1 = seq[:,:,frame-1]
         img2 = seq[:,:,frame]
         ti = time.time()
-        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance)
+        mask = SubtractDominantMotion(img1, img2, threshold, num_iters, tolerance,2,1)
         print('Elapsed time: ', time.time()-ti)
         cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
         cur_frame[mask] = [0,0,255]
