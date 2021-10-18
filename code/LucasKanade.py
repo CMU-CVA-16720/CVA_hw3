@@ -19,27 +19,27 @@ def LucasKanade(It, It1, rect, threshold, num_iters, p0=np.zeros(2)):
     # W1 = x+p0 -> [[1 0]
     # W2 = y+p1 ->  [0 1]]
     dwdp = np.array([[1, 0],[0, 1]])
-    # Get spline for image
+    # Get spline for image and template
     It1_spline = RectBivariateSpline(np.arange(0,It1.shape[0]),np.arange(0,It1.shape[1]),It1)
+    It_spline = RectBivariateSpline(np.arange(0,It.shape[0]),np.arange(0,It.shape[1]),It)
     # x and y vectors
-    x_vect = np.arange(0,It1.shape[1])
-    y_vect = np.arange(0,It1.shape[0])
+    x_vect = np.arange(rect[0],rect[2]+1)
+    y_vect = np.arange(rect[1],rect[3]+1)
     # Gradient descent
     p = np.copy(p0)
     for i in range(0,int(num_iters)):
         # W(x;p)
         X_vect = x_vect+p[0]
         Y_vect = y_vect+p[1]
-        # I(W(x;p))
+        # I(W(x;p)), T(x)
         I_warp = It1_spline(Y_vect, X_vect)
+        Template = It_spline(y_vect, x_vect)
         # T(x) - I(W(x;p)), crop
-        error = (It - I_warp)
-        error = error[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
+        error = (Template - I_warp)
         # gradient(I(W(x;p))), crop
         delIx = It1_spline(Y_vect, X_vect,dy=1)
         delIy = It1_spline(Y_vect, X_vect,dx=1)
         delI = np.stack((delIx, delIy), axis=2)
-        delI = delI[rect[1]:rect[3]+1,rect[0]:rect[2]+1]
         # Hessian
         delI_array = np.reshape(delI,(-1,1,2))                      # N x 1 x 2, N = # of pixels in rect
         delI_dwdp_array = delI_array @ dwdp                         # N x 1 x 2
@@ -78,30 +78,22 @@ if __name__ == "__main__":
     # Frame 12 -> 24, (137.1,135.6) -> (142.2,147.5); p ~ (5,12)
 
     # 0 -> 12
-    rectangle = np.array([59,116,145,151])
+    rectangle = np.array([59,116,145,151]).astype(float)
     now = datetime.now()
     p = LucasKanade(video[:,:,0], video[:,:,12], np.transpose(rectangle), 1e-5, 10000, np.zeros(2))
     print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (0  -> 12) = {}'.format(np.squeeze(p)))
-    plt.imshow(highlight(video[:,:,0],rectangle))
-    plt.show()
     rectangle2 = rectangle
     rectangle2[[0,2]] = rectangle2[[0,2]] + p[0]
     rectangle2[[1,3]] = rectangle2[[1,3]] + p[1]
-    plt.imshow(highlight(video[:,:,12],rectangle2))
-    plt.show()
 
     # 12 -> 24
     now = datetime.now()
     p = LucasKanade(video[:,:,12], video[:,:,24], np.transpose(rectangle), 1e-5, 10000, np.squeeze(p))
     print('Elapsed time: {}'.format(datetime.now()-now))
     print('p (12 -> 24) = {}'.format(np.squeeze(p)))
-    plt.imshow(highlight(video[:,:,12],rectangle2))
-    plt.show()
     rectangle3 = rectangle2
     rectangle3[[0,2]] = rectangle3[[0,2]] + p[0]
     rectangle3[[1,3]] = rectangle3[[1,3]] + p[1]
-    plt.imshow(highlight(video[:,:,24],rectangle3))
-    plt.show()
     print('p = {}'.format(p))
 

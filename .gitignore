@@ -17,3 +17,6 @@ code/__pycache__/LucasKanade.cpython-38.pyc
 code/__pycache__/LucasKanadeAffine.cpython-38.pyc
 code/__pycache__/SubtractDominantMotion.cpython-38.pyc
 .gitignore
+code/carseqrects-wcrt.npy
+code/girlseqrects-wcrt.npy
+code/girlseqrects.npy

@@ -21,7 +21,7 @@ p_sum = np.zeros(2)
 
 # Compute rect_array
 for i in range(1, seq.shape[2]):
-    p = LucasKanade(seq[:,:,i-1], seq[:,:,i], np.transpose(rect_array[i-1,:].astype('int')), threshold, num_iters, np.zeros(2))
+    p = LucasKanade(seq[:,:,i-1], seq[:,:,i], np.transpose(rect_array[i-1,:]), threshold, num_iters, np.zeros(2))
     p_sum += p
     rect_array[i,0] = (rect[0] + p_sum[0])
     rect_array[i,2] = (rect[2] + p_sum[0])
