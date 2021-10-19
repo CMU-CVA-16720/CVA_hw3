@@ -8,7 +8,7 @@ from LucasKanade import LucasKanade
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_iters', type=int, default=1e4, help='number of iterations of Lucas-Kanade')
 parser.add_argument('--threshold', type=float, default=1e-2, help='dp threshold of Lucas-Kanade for terminating optimization')
-parser.add_argument('--template_threshold', type=float, default=5, help='threshold for determining whether to update template')
+parser.add_argument('--template_threshold', type=float, default=2, help='threshold for determining whether to update template')
 args = parser.parse_args()
 num_iters = args.num_iters
 threshold = args.threshold
