@@ -22,9 +22,10 @@ def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance, eros
     # Compute error
     warp_img1 = affine_transform(image1, np.linalg.inv(M))
     error = np.abs(image2 - warp_img1)
+    struct = np.ones((3,3))
     mask = error>tolerance
-    mask = binary_erosion(mask, None, erosion)
-    mask = binary_dilation(mask, None, dilation)
+    mask = binary_erosion(mask, struct, erosion)
+    mask = binary_dilation(mask, struct, dilation)
 
     return mask
 
