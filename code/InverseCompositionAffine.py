@@ -116,9 +116,10 @@ def SubtractDominantMotion(image1, image2, threshold, num_iters, tolerance, eros
     # Compute error
     warp_img1 = affine_transform(image1, np.linalg.inv(M))
     error = np.abs(image2 - warp_img1)
+    struct = np.ones((3,3))
     mask = error>tolerance
-    mask = binary_erosion(mask, None, erosion)
-    mask = binary_dilation(mask, None, dilation)
+    mask = binary_erosion(mask, struct, erosion)
+    mask = binary_dilation(mask, struct, dilation)
 
     return mask
 
@@ -168,7 +169,7 @@ if __name__ == "__main__":
     # Ant seq
     threshold = 1e-2
     num_iters = 1e3
-    tolerance = 0.02
+    tolerance = 0.01
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/antseq.npy')
     print('Ant sequence: ')
@@ -180,15 +181,15 @@ if __name__ == "__main__":
         print('Elapsed time: ', time.time()-ti)
         cur_frame = cv2.cvtColor(np.floor(255*img2).astype('uint8'),cv2.COLOR_GRAY2BGR)
         cur_frame[mask] = [0,0,255]
-        plt.imshow(seq[:,:,frame]-seq[:,:,frame-1])
-        plt.show()
+        # plt.imshow(seq[:,:,frame]-seq[:,:,frame-1])
+        # plt.show()
         plt.imshow(cur_frame)
         plt.show()
     
     # Car seq
     threshold = 1e-2
     num_iters = 1e3
-    tolerance = 0.1
+    tolerance = 0.04
     frames_of_interest = [30, 60, 90, 120]
     seq = np.load('../data/aerialseq.npy')
     print('Car sequence: ')
